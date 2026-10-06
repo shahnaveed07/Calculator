@@ -1,3 +1,4 @@
+// Configuration for standard calculator keypad buttons
 const buttons = [
   { label: "AC", action: "clear", className: "utility" },
   { label: "⌫", action: "backspace", className: "utility" },
@@ -20,6 +21,7 @@ const buttons = [
   { label: "+", action: "+", className: "operator" },
 ];
 
+// Renders the primary number pad, operators, and mode toggle
 function BasicButtons({
   scientificMode,
   onModeToggle,

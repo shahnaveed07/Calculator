@@ -1,0 +1,9 @@
+{
+  "name": "Calculator",
+  "description": "Clean and responsive calculator web app featuring basic and scientific modes.",
+  "prompt": "Calculator web app with basic and scientific calculations",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

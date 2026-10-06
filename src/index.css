@@ -63,7 +63,7 @@ button {
   height: 100dvh;
 
   padding: 18px 14px 14px;
-  border: 1px solid gray;
+  border: 1px solid #333;
   display: flex;
   flex-direction: column;
 
@@ -314,6 +314,48 @@ button {
 
   .scientific-buttons {
     margin-bottom: 5px;
+  }
+}
+
+@media (max-height: 580px) {
+  .calculator {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .calculator h1 {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  .display {
+    padding-top: 4px;
+    padding-bottom: 6px;
+  }
+
+  .display span {
+    font-size: 34px;
+  }
+
+  .calc-button {
+    height: 40px;
+    border-radius: 10px;
+    font-size: 18px;
+  }
+
+  .scientific-button {
+    height: 28px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+
+  .basic-buttons,
+  .scientific-buttons {
+    gap: 4px;
+  }
+
+  .scientific-buttons {
+    margin-bottom: 4px;
   }
 }
 

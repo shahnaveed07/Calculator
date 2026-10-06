@@ -1,3 +1,4 @@
+// Renders the calculator display screen with the current formatted value
 function Display({ value }) {
   return (
     <div className="display">

@@ -1,4 +1,6 @@
+// Mathematical functions supported by the calculator
 const FUNCTIONS = {
+  // Natural logarithm (ln) with base e
   ln: (value) => {
     if (value <= 0) {
       throw new Error("Invalid ln");
@@ -7,6 +9,7 @@ const FUNCTIONS = {
     return Math.log(value);
   },
 
+  // Square root (√)
   sqrt: (value) => {
     if (value < 0) {
       throw new Error("Invalid square root");
@@ -15,15 +18,36 @@ const FUNCTIONS = {
     return Math.sqrt(value);
   },
 
-  root: (value) => {
-    if (value < 0) {
-      return -Math.pow(Math.abs(value), 1 / 2);
+  // Cube root by default, or nth-root if degree n is provided
+  root: (value, n = 3) => {
+    if (n === 0) {
+      throw new Error("Invalid root degree");
     }
 
-    return Math.sqrt(value);
+    if (n === 3) {
+      return Math.cbrt(value);
+    }
+
+    if (n === 2) {
+      if (value < 0) {
+        throw new Error("Invalid square root");
+      }
+      return Math.sqrt(value);
+    }
+
+    if (value < 0 && n % 2 === 0) {
+      throw new Error("Invalid root");
+    }
+
+    if (value < 0) {
+      return -Math.pow(-value, 1 / n);
+    }
+
+    return Math.pow(value, 1 / n);
   },
 };
 
+// Calculates factorial for non-negative integers up to 170
 function factorial(value) {
   if (!Number.isInteger(value) || value < 0 || value > 170) {
     throw new Error("Invalid factorial");
@@ -38,6 +62,7 @@ function factorial(value) {
   return result;
 }
 
+// Converts raw expression string into tokens (numbers, functions, operators)
 function tokenize(expression) {
   const tokens = [];
   let index = 0;
@@ -88,13 +113,13 @@ function tokenize(expression) {
 
       tokens.push({
         type: "function",
-        value: name,
+        value,
       });
 
       continue;
     }
 
-    if ("+-*/^!%()".includes(char)) {
+    if ("+-*/^!%(),".includes(char)) {
       tokens.push({
         type: "operator",
         value: char,
@@ -110,6 +135,7 @@ function tokenize(expression) {
   return tokens;
 }
 
+// Evaluates a mathematical string expression and returns the numeric result
 export function evaluateExpression(expression) {
   const tokens = tokenize(expression);
   let position = 0;
@@ -118,6 +144,7 @@ export function evaluateExpression(expression) {
 
   const consume = () => tokens[position++];
 
+  // Handles addition and subtraction (+, -)
   const parseExpression = () => {
     let result = parseTerm();
 
@@ -137,6 +164,7 @@ export function evaluateExpression(expression) {
     return result;
   };
 
+  // Handles multiplication and division (*, /)
   const parseTerm = () => {
     let result = parsePower();
 
@@ -160,6 +188,7 @@ export function evaluateExpression(expression) {
     return result;
   };
 
+  // Handles power operator (^)
   const parsePower = () => {
     let result = parseUnary();
 
@@ -173,6 +202,7 @@ export function evaluateExpression(expression) {
     return result;
   };
 
+  // Handles unary signs (+, -)
   const parseUnary = () => {
     if (peek()?.value === "+") {
       consume();
@@ -187,6 +217,7 @@ export function evaluateExpression(expression) {
     return parsePostfix();
   };
 
+  // Handles postfix operators (! for factorial, % for percentage)
   const parsePostfix = () => {
     let result = parsePrimary();
 
@@ -206,6 +237,7 @@ export function evaluateExpression(expression) {
     return result;
   };
 
+  // Handles primary values: numbers, parentheses, and functions
   const parsePrimary = () => {
     const token = peek();
 
@@ -245,7 +277,12 @@ export function evaluateExpression(expression) {
 
       consume();
 
-      const value = parseExpression();
+      const args = [parseExpression()];
+
+      while (peek()?.value === ",") {
+        consume();
+        args.push(parseExpression());
+      }
 
       if (peek()?.value !== ")") {
         throw new Error("Missing bracket");
@@ -253,7 +290,7 @@ export function evaluateExpression(expression) {
 
       consume();
 
-      return FUNCTIONS[functionName](value);
+      return FUNCTIONS[functionName](...args);
     }
 
     throw new Error("Invalid expression");
@@ -272,6 +309,7 @@ export function evaluateExpression(expression) {
   return result;
 }
 
+// Formats calculated number for the display screen
 export function formatResult(value) {
   if (!Number.isFinite(value)) {
     return "Error";
@@ -281,9 +319,11 @@ export function formatResult(value) {
     return "0";
   }
 
+  // Round to 12 significant digits to avoid floating point precision artifacts
   return String(Number(value.toPrecision(12)));
 }
 
+// Formats internal expression operators for user display (e.g., * becomes ×)
 export function formatExpression(expression) {
   return expression
     .replaceAll("sqrt", "√")
