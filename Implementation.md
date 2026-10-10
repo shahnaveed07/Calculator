@@ -88,7 +88,27 @@
    - Bound `e`/`E` to Euler's constant and `l`/`L` to logarithmic functions.
    - Optimized keyboard event handling in `Calculator.jsx` with a stable handler ref to prevent re-attaching listeners on every render.
 
-### 4.3 Automated Verification
+### 4.3 UI Redesign & Responsive Architecture
+1. **Premium OLED Dark Theme & Surface Elevation**:
+   - Transformed the calculator into a focused, elevated card on desktop viewports (`background: #0c0c0c`, `border: 1px solid #242424`, `border-radius: 28px`, deep multi-layer shadow).
+   - Centered with subtle outer spacing on desktop while seamlessly filling the display without letterboxing on mobile and smaller devices.
+   - Refined the Calculator header with balanced spacing, clean typographic weight, and restrained margins.
+
+2. **Dedicated Display Row & Angle Badge Isolation**:
+   - Isolated the `DEG`/`RAD` badge inside `.display-top-row` alongside `.display-history`.
+   - Prevented generic `.display span` style cascades so the angle badge maintains a crisp, small, pill-badge appearance regardless of screen height or result size.
+   - Preserved display scrolling for lengthy expressions without clipping or horizontal overflow.
+
+3. **Keypad Button Hierarchy & Tactile Feedback**:
+   - Refined visual styling across all button classes:
+     - Digits: Subdued matte charcoal surfaces with clear contrast.
+     - Utilities (`AC`, `⌫`, `%`): Higher-contrast gray surfaces (`#36363a`).
+     - Operators (`÷`, `×`, `−`, `+`): Deep tinted warm brown with bright orange glyphs (`#2c241c`).
+     - Active angle modes (`DEG`/`RAD`): Accent glow and border highlight (`#2a2219`, `border: 1px solid rgba(255, 121, 0, 0.5)`).
+     - Equals (`=`): Bold primary orange surface with subtle hover brighten.
+   - Proportionate heights and gaps across 850px, 700px, 580px, and mobile media queries ensuring buttons remain comfortable to tap without crowding or clipping.
+
+### 4.4 Automated Verification
 - Added tests for unary minus power precedence, exponential scientific notation chaining, implicit multiplication after constants, `e` constant evaluations, and `log` operations.
 - All 155 unit tests passed cleanly via `npm test`.
 - Linter checks passed with 0 errors (`oxlint`).
