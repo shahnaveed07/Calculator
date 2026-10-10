@@ -64,11 +64,24 @@ function factorial(value) {
 
 // Converts raw expression string into tokens (numbers, functions, operators)
 function tokenize(expression) {
+  // Normalize display symbols (×, ÷, −, √) for parser compatibility
+  const normalized = expression
+    .replaceAll("×", "*")
+    .replaceAll("÷", "/")
+    .replaceAll("−", "-")
+    .replaceAll("√", "sqrt");
+
   const tokens = [];
   let index = 0;
 
-  while (index < expression.length) {
-    const char = expression[index];
+  // Checks if the previous token was a percent or closing bracket that requires implicit multiplication
+  const shouldInsertImplicitMultiply = () => {
+    const last = tokens.at(-1);
+    return last && (last.value === "%" || last.value === ")");
+  };
+
+  while (index < normalized.length) {
+    const char = normalized[index];
 
     if (/\s/.test(char)) {
       index += 1;
@@ -76,13 +89,20 @@ function tokenize(expression) {
     }
 
     if (/\d|\./.test(char)) {
+      if (shouldInsertImplicitMultiply()) {
+        tokens.push({
+          type: "operator",
+          value: "*",
+        });
+      }
+
       let number = "";
 
       while (
-        index < expression.length &&
-        /[\d.]/.test(expression[index])
+        index < normalized.length &&
+        /[\d.]/.test(normalized[index])
       ) {
-        number += expression[index];
+        number += normalized[index];
         index += 1;
       }
 
@@ -101,13 +121,20 @@ function tokenize(expression) {
     }
 
     if (/[a-zA-Z]/.test(char)) {
+      if (shouldInsertImplicitMultiply()) {
+        tokens.push({
+          type: "operator",
+          value: "*",
+        });
+      }
+
       let name = "";
 
       while (
-        index < expression.length &&
-        /[a-zA-Z]/.test(expression[index])
+        index < normalized.length &&
+        /[a-zA-Z]/.test(normalized[index])
       ) {
-        name += expression[index];
+        name += normalized[index];
         index += 1;
       }
 
@@ -117,6 +144,13 @@ function tokenize(expression) {
       });
 
       continue;
+    }
+
+    if (char === "(" && shouldInsertImplicitMultiply()) {
+      tokens.push({
+        type: "operator",
+        value: "*",
+      });
     }
 
     if ("+-*/^!%(),".includes(char)) {
@@ -234,6 +268,7 @@ export function evaluateExpression(expression) {
   // Handles postfix operators (! for factorial, % for percentage)
   const parsePostfix = () => {
     let item = parsePrimary();
+    let percentCount = 0;
 
     while (
       peek()?.value === "!" ||
@@ -243,7 +278,12 @@ export function evaluateExpression(expression) {
 
       if (operator === "!") {
         item = { value: factorial(item.value), isPercent: false };
+        percentCount = 0;
       } else {
+        percentCount += 1;
+        if (percentCount > 1) {
+          throw new Error("Invalid percentage sequence");
+        }
         item = { value: item.value / 100, isPercent: true };
       }
     }

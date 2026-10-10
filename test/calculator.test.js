@@ -19,16 +19,31 @@ assert.equal(evaluateExpression("-(2+3)"), -5, "Unary minus with brackets failed
 assert.equal(formatResult(evaluateExpression("0.1+0.2")), "0.3", "Decimal rounding failed");
 
 // Test percentages (standard handheld context-aware behavior)
+assert.equal(evaluateExpression("8% × 3"), 0.24, "8% × 3 failed");
+assert.equal(evaluateExpression("8%×3"), 0.24, "8%×3 failed");
 assert.equal(evaluateExpression("50%"), 0.5, "50% failed");
-assert.equal(evaluateExpression("200*10%"), 20, "200 * 10% failed");
-assert.equal(evaluateExpression("200*10%+5"), 25, "200 * 10% + 5 failed");
-assert.equal(evaluateExpression("100+10%"), 110, "100 + 10% failed");
-assert.equal(evaluateExpression("100-10%"), 90, "100 - 10% failed");
-assert.equal(evaluateExpression("200/10%"), 2000, "200 / 10% failed");
-assert.equal(evaluateExpression("25%*200"), 50, "25% * 200 failed");
+assert.equal(evaluateExpression("200 × 10%"), 20, "200 × 10% failed");
+assert.equal(evaluateExpression("200 * 10%"), 20, "200 * 10% failed");
+assert.equal(evaluateExpression("200 * 10% + 5"), 25, "200 * 10% + 5 failed");
+assert.equal(evaluateExpression("100 + 10%"), 110, "100 + 10% failed");
+assert.equal(evaluateExpression("100 - 10%"), 90, "100 - 10% failed");
+assert.equal(evaluateExpression("100 − 10%"), 90, "100 − 10% failed");
+assert.equal(evaluateExpression("200 ÷ 10%"), 2000, "200 ÷ 10% failed");
+assert.equal(evaluateExpression("200 / 10%"), 2000, "200 / 10% failed");
+assert.equal(evaluateExpression("50% × 200"), 100, "50% × 200 failed");
+assert.equal(evaluateExpression("50% * 200"), 100, "50% * 200 failed");
+assert.equal(evaluateExpression("50%8%"), 0.04, "50%8% failed");
+assert.equal(evaluateExpression("50% 8%"), 0.04, "50% 8% failed");
 assert.equal(evaluateExpression("100+7.5%"), 107.5, "Decimal percent addition failed");
 assert.equal(evaluateExpression("100-12.5%"), 87.5, "Decimal percent subtraction failed");
 assert.equal(evaluateExpression("(100+10%)*2"), 220, "Bracketed percentage failed");
+
+// Test invalid percentage sequences
+assert.throws(() => evaluateExpression("%%"), /Invalid expression/);
+assert.throws(() => evaluateExpression("50%%"), /Invalid percentage sequence/);
+assert.throws(() => evaluateExpression("%*%"), /Invalid expression/);
+assert.throws(() => evaluateExpression("%+5"), /Invalid expression/);
+assert.throws(() => evaluateExpression("%"), /Invalid expression/);
 
 // Test scientific functions
 assert.equal(evaluateExpression("ln(1)"), 0, "ln(1) failed");

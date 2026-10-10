@@ -329,6 +329,8 @@ function Calculator() {
         handlePress(key);
       } else if (["+", "-", "*", "/"].includes(key)) {
         handlePress(key);
+      } else if (key === "x" || key === "X") {
+        handlePress("*");
       } else if (key === ".") {
         handlePress(".");
       } else if (key === "Enter" || key === "=") {
