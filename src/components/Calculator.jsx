@@ -41,8 +41,8 @@ function Calculator() {
 
     const last = expression.at(-1);
 
-    // If previous character was a closing bracket or percent, insert implicit multiplication
-    if (/[)!%]/.test(last)) {
+    // If previous character was a closing bracket, insert implicit multiplication
+    if (last === ")") {
       updateExpression(`${expression}*${number}`);
       return;
     }
@@ -117,8 +117,8 @@ function Calculator() {
 
       const last = expression.at(-1);
 
-      // Insert implicit multiplication before bracket if preceded by digit, close bracket, or %
-      if (/\d|\)|%$/.test(last)) {
+      // Insert implicit multiplication before bracket if preceded by digit or close bracket
+      if (/\d|\)$/.test(last)) {
         updateExpression(`${expression}*(`);
       } else {
         updateExpression(`${expression}(`);
@@ -243,7 +243,7 @@ function Calculator() {
 
   // Evaluates the current mathematical expression
   const calculate = () => {
-    if (!expression || /[+\-*/^(]$/.test(expression)) {
+    if (!expression) {
       return;
     }
 

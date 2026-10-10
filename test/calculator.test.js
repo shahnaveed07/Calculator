@@ -18,32 +18,44 @@ assert.equal(evaluateExpression("-(2+3)"), -5, "Unary minus with brackets failed
 // Test decimals and precision
 assert.equal(formatResult(evaluateExpression("0.1+0.2")), "0.3", "Decimal rounding failed");
 
-// Test percentages (standard handheld context-aware behavior)
+// Test percentages (conventional context-aware behavior)
+assert.equal(evaluateExpression("50%"), 0.5, "50% failed");
 assert.equal(evaluateExpression("8% × 3"), 0.24, "8% × 3 failed");
 assert.equal(evaluateExpression("8%×3"), 0.24, "8%×3 failed");
-assert.equal(evaluateExpression("50%"), 0.5, "50% failed");
-assert.equal(evaluateExpression("200 × 10%"), 20, "200 × 10% failed");
-assert.equal(evaluateExpression("200 * 10%"), 20, "200 * 10% failed");
-assert.equal(evaluateExpression("200 * 10% + 5"), 25, "200 * 10% + 5 failed");
-assert.equal(evaluateExpression("100 + 10%"), 110, "100 + 10% failed");
-assert.equal(evaluateExpression("100 - 10%"), 90, "100 - 10% failed");
-assert.equal(evaluateExpression("100 − 10%"), 90, "100 − 10% failed");
-assert.equal(evaluateExpression("200 ÷ 10%"), 2000, "200 ÷ 10% failed");
-assert.equal(evaluateExpression("200 / 10%"), 2000, "200 / 10% failed");
 assert.equal(evaluateExpression("50% × 200"), 100, "50% × 200 failed");
 assert.equal(evaluateExpression("50% * 200"), 100, "50% * 200 failed");
+assert.equal(evaluateExpression("200 × 10%"), 20, "200 × 10% failed");
+assert.equal(evaluateExpression("200 * 10%"), 20, "200 * 10% failed");
+assert.equal(evaluateExpression("457 ÷ 500 × 100"), 91.4, "457 ÷ 500 × 100 failed");
+assert.equal(evaluateExpression("457 / 500 * 100"), 91.4, "457 / 500 * 100 failed");
+assert.equal(evaluateExpression("457%500"), 2285, "457%500 failed");
+assert.equal(evaluateExpression("200 ÷ 10%"), 2000, "200 ÷ 10% failed");
+assert.equal(evaluateExpression("200 / 10%"), 2000, "200 / 10% failed");
+assert.equal(evaluateExpression("100 + 10%"), 110, "100 + 10% failed");
+assert.equal(evaluateExpression("100 − 10%"), 90, "100 − 10% failed");
+assert.equal(evaluateExpression("100 - 10%"), 90, "100 - 10% failed");
+assert.equal(evaluateExpression("100 + 10% × 2"), 120, "100 + 10% × 2 failed");
+assert.equal(evaluateExpression("100 + 10% * 2"), 120, "100 + 10% * 2 failed");
+assert.equal(evaluateExpression("(50%) × 200"), 100, "(50%) × 200 failed");
+assert.equal(evaluateExpression("(50%) * 200"), 100, "(50%) * 200 failed");
+assert.equal(evaluateExpression("25.5%"), 0.255, "25.5% failed");
+assert.equal(evaluateExpression("200 * 10% + 5"), 25, "200 * 10% + 5 failed");
 assert.equal(evaluateExpression("50%8%"), 0.04, "50%8% failed");
 assert.equal(evaluateExpression("50% 8%"), 0.04, "50% 8% failed");
 assert.equal(evaluateExpression("100+7.5%"), 107.5, "Decimal percent addition failed");
 assert.equal(evaluateExpression("100-12.5%"), 87.5, "Decimal percent subtraction failed");
 assert.equal(evaluateExpression("(100+10%)*2"), 220, "Bracketed percentage failed");
 
-// Test invalid percentage sequences
+// Test invalid percentage sequences & regression cases
+assert.throws(() => evaluateExpression("%"), /Invalid expression/);
+assert.throws(() => evaluateExpression("%5"), /Invalid expression/);
+assert.throws(() => evaluateExpression("8%%"), /Invalid percentage sequence/);
+assert.throws(() => evaluateExpression("8% ×"), /Unexpected end/);
+assert.throws(() => evaluateExpression("8% *"), /Unexpected end/);
 assert.throws(() => evaluateExpression("%%"), /Invalid expression/);
 assert.throws(() => evaluateExpression("50%%"), /Invalid percentage sequence/);
 assert.throws(() => evaluateExpression("%*%"), /Invalid expression/);
 assert.throws(() => evaluateExpression("%+5"), /Invalid expression/);
-assert.throws(() => evaluateExpression("%"), /Invalid expression/);
 
 // Test reciprocal (1/x)
 assert.equal(evaluateExpression("1/(4)"), 0.25, "1/(4) failed");
@@ -81,5 +93,13 @@ assert.equal(formatResult(Infinity), "Error");
 assert.equal(formatResult(NaN), "Error");
 assert.equal(formatResult(-0), "0");
 assert.equal(formatExpression("sqrt(4)*2/1"), "√(4)×2÷1");
+assert.equal(formatExpression("50%"), "50%");
+assert.equal(formatExpression("8%*3"), "8%×3");
+assert.equal(formatExpression("50%*200"), "50%×200");
+assert.equal(formatExpression("200/10%"), "200÷10%");
+assert.equal(formatExpression("100+10%"), "100+10%");
+assert.equal(formatExpression("100-10%"), "100-10%");
+assert.equal(formatExpression("457%500"), "457%500");
+assert.equal(formatExpression("457% 500"), "457% 500");
 
 console.log("All calculator unit tests passed successfully!");

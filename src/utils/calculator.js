@@ -179,95 +179,84 @@ export function evaluateExpression(expression) {
   const consume = () => tokens[position++];
 
   // Handles addition and subtraction (+, -) with context-aware percentage
-  const parseExpression = () => {
-    let left = parseTerm();
+  const parseExpression = (baseValue = undefined) => {
+    let left = parseTerm(baseValue);
 
     while (
       peek()?.value === "+" ||
       peek()?.value === "-"
     ) {
       const operator = consume().value;
-      const right = parseTerm();
+      // In addition/subtraction, the percentage in the right term is calculated relative to the left-hand accumulator
+      const right = parseTerm(left);
 
-      // In addition/subtraction, percentage is relative to previous accumulator (e.g. 100 + 10% = 110)
-      let rightValue = right.value;
-      if (right.isPercent) {
-        rightValue = left.value * right.value;
-      }
-
-      left = {
-        value:
-          operator === "+"
-            ? left.value + rightValue
-            : left.value - rightValue,
-        isPercent: false,
-      };
+      left =
+        operator === "+"
+          ? left + right
+          : left - right;
     }
 
     return left;
   };
 
   // Handles multiplication and division (*, /)
-  const parseTerm = () => {
-    let left = parsePower();
+  const parseTerm = (baseValue = undefined) => {
+    let left = parsePower(baseValue);
 
     while (
       peek()?.value === "*" ||
       peek()?.value === "/"
     ) {
       const operator = consume().value;
-      const right = parsePower();
+      // In multiplication/division, the percentage is a fractional value
+      const right = parsePower(undefined);
 
-      if (operator === "/" && right.value === 0) {
+      if (operator === "/" && right === 0) {
         throw new Error("Division by zero");
       }
 
-      left = {
-        value:
-          operator === "*"
-            ? left.value * right.value
-            : left.value / right.value,
-        isPercent: false,
-      };
+      left =
+        operator === "*"
+          ? left * right
+          : left / right;
     }
 
     return left;
   };
 
   // Handles power operator (^)
-  const parsePower = () => {
-    let left = parseUnary();
+  const parsePower = (baseValue = undefined) => {
+    let left = parseUnary(baseValue);
 
     if (peek()?.value === "^") {
       consume();
 
-      const exponent = parsePower();
-      left = { value: Math.pow(left.value, exponent.value), isPercent: false };
+      // Exponent is evaluated as a pure number without additive context
+      const exponent = parsePower(undefined);
+      left = Math.pow(left, exponent);
     }
 
     return left;
   };
 
   // Handles unary signs (+, -)
-  const parseUnary = () => {
+  const parseUnary = (baseValue = undefined) => {
     if (peek()?.value === "+") {
       consume();
-      const next = parseUnary();
-      return { value: next.value, isPercent: next.isPercent };
+      return parseUnary(baseValue);
     }
 
     if (peek()?.value === "-") {
       consume();
-      const next = parseUnary();
-      return { value: -next.value, isPercent: next.isPercent };
+      return -parseUnary(baseValue);
     }
 
-    return parsePostfix();
+    return parsePostfix(baseValue);
   };
 
   // Handles postfix operators (! for factorial, % for percentage)
-  const parsePostfix = () => {
-    let item = parsePrimary();
+  const parsePostfix = (baseValue = undefined) => {
+    let item = parsePrimary(baseValue);
     let percentCount = 0;
 
     while (
@@ -277,14 +266,20 @@ export function evaluateExpression(expression) {
       const operator = consume().value;
 
       if (operator === "!") {
-        item = { value: factorial(item.value), isPercent: false };
+        item = factorial(item);
         percentCount = 0;
       } else {
         percentCount += 1;
         if (percentCount > 1) {
           throw new Error("Invalid percentage sequence");
         }
-        item = { value: item.value / 100, isPercent: true };
+
+        // Conventional calculator percentage: relative to baseValue in addition/subtraction, or fractional value
+        if (baseValue !== undefined) {
+          item = item * (baseValue / 100);
+        } else {
+          item = item / 100;
+        }
       }
     }
 
@@ -292,7 +287,7 @@ export function evaluateExpression(expression) {
   };
 
   // Handles primary values: numbers, parentheses, and functions
-  const parsePrimary = () => {
+  const parsePrimary = (baseValue = undefined) => {
     const token = peek();
 
     if (!token) {
@@ -301,13 +296,13 @@ export function evaluateExpression(expression) {
 
     if (token.type === "number") {
       consume();
-      return { value: token.value, isPercent: false };
+      return token.value;
     }
 
     if (token.value === "(") {
       consume();
 
-      const result = parseExpression();
+      const result = parseExpression(baseValue);
 
       if (peek()?.value !== ")") {
         throw new Error("Missing bracket");
@@ -331,11 +326,11 @@ export function evaluateExpression(expression) {
 
       consume();
 
-      const args = [parseExpression().value];
+      const args = [parseExpression(undefined)];
 
       while (peek()?.value === ",") {
         consume();
-        args.push(parseExpression().value);
+        args.push(parseExpression(undefined));
       }
 
       if (peek()?.value !== ")") {
@@ -344,23 +339,23 @@ export function evaluateExpression(expression) {
 
       consume();
 
-      return { value: FUNCTIONS[functionName](...args), isPercent: false };
+      return FUNCTIONS[functionName](...args);
     }
 
     throw new Error("Invalid expression");
   };
 
-  const result = parseExpression();
+  const result = parseExpression(undefined);
 
   if (position !== tokens.length) {
     throw new Error("Invalid expression");
   }
 
-  if (!Number.isFinite(result.value)) {
+  if (!Number.isFinite(result)) {
     throw new Error("Invalid result");
   }
 
-  return result.value;
+  return result;
 }
 
 // Formats calculated number for the display screen
