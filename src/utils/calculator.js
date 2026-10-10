@@ -113,7 +113,7 @@ function tokenize(expression) {
 
       tokens.push({
         type: "function",
-        value,
+        value: name,
       });
 
       continue;
