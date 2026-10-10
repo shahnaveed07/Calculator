@@ -9,16 +9,11 @@ import {
 } from "../utils/calculator";
 
 function Calculator() {
-  // Stores the raw mathematical expression string
   const [expression, setExpression] = useState("");
-  // Formatted string displayed on screen
   const [display, setDisplay] = useState("0");
-  // Toggle state for showing/hiding scientific buttons
   const [scientificMode, setScientificMode] = useState(false);
-  // Tracks if the current screen value was just produced by a calculation
   const [justCalculated, setJustCalculated] = useState(false);
 
-  // Updates expression state and formats it for user display
   const updateExpression = (value) => {
     setExpression(value);
     setDisplay(value ? formatExpression(value) : "0");
