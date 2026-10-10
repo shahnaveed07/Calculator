@@ -45,6 +45,15 @@ assert.throws(() => evaluateExpression("%*%"), /Invalid expression/);
 assert.throws(() => evaluateExpression("%+5"), /Invalid expression/);
 assert.throws(() => evaluateExpression("%"), /Invalid expression/);
 
+// Test reciprocal (1/x)
+assert.equal(evaluateExpression("1/(4)"), 0.25, "1/(4) failed");
+assert.equal(evaluateExpression("1/(2)"), 0.5, "1/(2) failed");
+assert.equal(evaluateExpression("1/(-4)"), -0.25, "1/(-4) failed");
+assert.equal(evaluateExpression("1/(2+3)"), 0.2, "1/(2+3) failed");
+assert.equal(evaluateExpression("1÷(4)"), 0.25, "1÷(4) failed");
+assert.equal(evaluateExpression("1÷(2+3)"), 0.2, "1÷(2+3) failed");
+assert.throws(() => evaluateExpression("1/(0)"), /Division by zero/);
+
 // Test scientific functions
 assert.equal(evaluateExpression("ln(1)"), 0, "ln(1) failed");
 assert.ok(Math.abs(evaluateExpression("ln(2.718281828459045)") - 1) < 1e-12, "ln(e) failed");

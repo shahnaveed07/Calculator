@@ -3,7 +3,7 @@ const scientificButtons = [
   { label: "ln", action: "ln" },
   { label: "pow", action: "pow" },
   { label: "√", action: "sqrt" },
-  { label: "root", action: "root" },
+  { label: "1/x", action: "reciprocal" },
 
   { label: "x²", action: "square" },
   { label: "x!", action: "factorial" },

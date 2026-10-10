@@ -139,12 +139,11 @@ function Calculator() {
     updateExpression(`${expression})`);
   };
 
-  // Applies prefix or postfix scientific functions (ln, sqrt, root, square, factorial)
+  // Applies scientific functions (ln, sqrt, reciprocal, square, factorial)
   const applyScientificFunction = (action) => {
     switch (action) {
       case "ln":
-      case "sqrt":
-      case "root": {
+      case "sqrt": {
         // If empty or ends with operator/bracket, start the function call
         if (!expression || /[+\-*/^(]$/.test(expression)) {
           updateExpression(`${expression}${action}(`);
@@ -153,6 +152,18 @@ function Calculator() {
 
         // If an expression already exists, wrap it in the function call
         updateExpression(`${action}(${expression})`);
+        break;
+      }
+
+      case "reciprocal": {
+        // If empty or ends with operator/bracket, start reciprocal division 1/(
+        if (!expression || /[+\-*/^(]$/.test(expression)) {
+          updateExpression(`${expression}1/(`);
+          return;
+        }
+
+        // Wrap current expression in parentheses to calculate reciprocal 1/(expression)
+        updateExpression(`1/(${expression})`);
         break;
       }
 
@@ -218,8 +229,8 @@ function Calculator() {
       updateExpression(expression.slice(0, -5));
       return;
     }
-    if (expression.endsWith("root(")) {
-      updateExpression(expression.slice(0, -5));
+    if (expression.endsWith("1/(")) {
+      updateExpression(expression.slice(0, -3));
       return;
     }
     if (expression.endsWith("ln(")) {
@@ -309,7 +320,7 @@ function Calculator() {
 
       case "ln":
       case "sqrt":
-      case "root":
+      case "reciprocal":
       case "square":
       case "factorial":
         applyScientificFunction(action);
