@@ -144,9 +144,9 @@ export function evaluateExpression(expression) {
 
   const consume = () => tokens[position++];
 
-  // Handles addition and subtraction (+, -)
+  // Handles addition and subtraction (+, -) with context-aware percentage
   const parseExpression = () => {
-    let result = parseTerm();
+    let left = parseTerm();
 
     while (
       peek()?.value === "+" ||
@@ -155,18 +155,27 @@ export function evaluateExpression(expression) {
       const operator = consume().value;
       const right = parseTerm();
 
-      result =
-        operator === "+"
-          ? result + right
-          : result - right;
+      // In addition/subtraction, percentage is relative to previous accumulator (e.g. 100 + 10% = 110)
+      let rightValue = right.value;
+      if (right.isPercent) {
+        rightValue = left.value * right.value;
+      }
+
+      left = {
+        value:
+          operator === "+"
+            ? left.value + rightValue
+            : left.value - rightValue,
+        isPercent: false,
+      };
     }
 
-    return result;
+    return left;
   };
 
   // Handles multiplication and division (*, /)
   const parseTerm = () => {
-    let result = parsePower();
+    let left = parsePower();
 
     while (
       peek()?.value === "*" ||
@@ -175,43 +184,48 @@ export function evaluateExpression(expression) {
       const operator = consume().value;
       const right = parsePower();
 
-      if (operator === "/" && right === 0) {
+      if (operator === "/" && right.value === 0) {
         throw new Error("Division by zero");
       }
 
-      result =
-        operator === "*"
-          ? result * right
-          : result / right;
+      left = {
+        value:
+          operator === "*"
+            ? left.value * right.value
+            : left.value / right.value,
+        isPercent: false,
+      };
     }
 
-    return result;
+    return left;
   };
 
   // Handles power operator (^)
   const parsePower = () => {
-    let result = parseUnary();
+    let left = parseUnary();
 
     if (peek()?.value === "^") {
       consume();
 
       const exponent = parsePower();
-      result = Math.pow(result, exponent);
+      left = { value: Math.pow(left.value, exponent.value), isPercent: false };
     }
 
-    return result;
+    return left;
   };
 
   // Handles unary signs (+, -)
   const parseUnary = () => {
     if (peek()?.value === "+") {
       consume();
-      return parseUnary();
+      const next = parseUnary();
+      return { value: next.value, isPercent: next.isPercent };
     }
 
     if (peek()?.value === "-") {
       consume();
-      return -parseUnary();
+      const next = parseUnary();
+      return { value: -next.value, isPercent: next.isPercent };
     }
 
     return parsePostfix();
@@ -219,7 +233,7 @@ export function evaluateExpression(expression) {
 
   // Handles postfix operators (! for factorial, % for percentage)
   const parsePostfix = () => {
-    let result = parsePrimary();
+    let item = parsePrimary();
 
     while (
       peek()?.value === "!" ||
@@ -228,13 +242,13 @@ export function evaluateExpression(expression) {
       const operator = consume().value;
 
       if (operator === "!") {
-        result = factorial(result);
+        item = { value: factorial(item.value), isPercent: false };
       } else {
-        result /= 100;
+        item = { value: item.value / 100, isPercent: true };
       }
     }
 
-    return result;
+    return item;
   };
 
   // Handles primary values: numbers, parentheses, and functions
@@ -247,7 +261,7 @@ export function evaluateExpression(expression) {
 
     if (token.type === "number") {
       consume();
-      return token.value;
+      return { value: token.value, isPercent: false };
     }
 
     if (token.value === "(") {
@@ -277,11 +291,11 @@ export function evaluateExpression(expression) {
 
       consume();
 
-      const args = [parseExpression()];
+      const args = [parseExpression().value];
 
       while (peek()?.value === ",") {
         consume();
-        args.push(parseExpression());
+        args.push(parseExpression().value);
       }
 
       if (peek()?.value !== ")") {
@@ -290,7 +304,7 @@ export function evaluateExpression(expression) {
 
       consume();
 
-      return FUNCTIONS[functionName](...args);
+      return { value: FUNCTIONS[functionName](...args), isPercent: false };
     }
 
     throw new Error("Invalid expression");
@@ -302,11 +316,11 @@ export function evaluateExpression(expression) {
     throw new Error("Invalid expression");
   }
 
-  if (!Number.isFinite(result)) {
+  if (!Number.isFinite(result.value)) {
     throw new Error("Invalid result");
   }
 
-  return result;
+  return result.value;
 }
 
 // Formats calculated number for the display screen

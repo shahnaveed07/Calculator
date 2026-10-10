@@ -57,6 +57,11 @@ function Calculator() {
       return;
     }
 
+    // Prevent attaching decimal point directly after percent or closing bracket
+    if (expression.endsWith("%") || expression.endsWith(")")) {
+      return;
+    }
+
     // Find the current active number segment after any operator or bracket
     const currentNumber = expression.match(/(\d*\.?\d*)$/)?.[1] ?? "";
 
