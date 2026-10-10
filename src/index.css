@@ -105,14 +105,23 @@ button {
   align-items: stretch;
   justify-content: flex-end;
 
-  padding: 14px 6px 18px;
+  padding: 12px 6px 14px;
 
   overflow: hidden;
   position: relative;
 }
 
+.display-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 22px;
+  margin-bottom: 2px;
+  gap: 8px;
+}
+
 .angle-mode-badge {
-  align-self: flex-start;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -120,7 +129,19 @@ button {
   background: rgba(255, 121, 0, 0.12);
   padding: 2px 7px;
   border-radius: 6px;
-  margin-bottom: 4px;
+  user-select: none;
+}
+
+.display-history {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 400;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: auto;
+  user-select: none;
 }
 
 .display .display-value {
@@ -128,15 +149,21 @@ button {
 
   color: #f5f5f5;
 
-  font-size: clamp(48px, 11vw, 70px);
+  font-size: clamp(38px, 10vw, 68px);
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.1;
 
   text-align: right;
 
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.display .display-value::-webkit-scrollbar {
+  display: none;
 }
 
 /* =========================

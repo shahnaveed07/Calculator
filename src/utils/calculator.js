@@ -46,6 +46,15 @@ const FUNCTIONS = {
     return Math.log(value);
   },
 
+  // Common logarithm (log) with base 10
+  log: (value) => {
+    if (value <= 0) {
+      throw new Error("Invalid log");
+    }
+
+    return Math.log10(value);
+  },
+
   // Square root (√)
   sqrt: (value) => {
     if (value < 0) {
@@ -111,10 +120,10 @@ function tokenize(expression) {
   const tokens = [];
   let index = 0;
 
-  // Checks if the previous token was a percent, closing bracket, or pi that requires implicit multiplication
+  // Checks if the previous token was a percent, closing bracket, or constant that requires implicit multiplication
   const shouldInsertImplicitMultiply = () => {
     const last = tokens.at(-1);
-    return last && (last.value === "%" || last.value === ")" || last.value === "π");
+    return last && (last.value === "%" || last.value === ")" || last.isConstant);
   };
 
   while (index < normalized.length) {
@@ -136,6 +145,7 @@ function tokenize(expression) {
       tokens.push({
         type: "number",
         value: Math.PI,
+        isConstant: true,
       });
 
       index += 1;
@@ -158,6 +168,31 @@ function tokenize(expression) {
       ) {
         number += normalized[index];
         index += 1;
+      }
+
+      // Check for scientific exponential notation (e.g., 1e-7, 2.5e+3, 1e5)
+      if (
+        index < normalized.length &&
+        (normalized[index] === "e" || normalized[index] === "E")
+      ) {
+        const nextChar = normalized[index + 1];
+        if (
+          /\d/.test(nextChar) ||
+          ((nextChar === "+" || nextChar === "-") &&
+            index + 2 < normalized.length &&
+            /\d/.test(normalized[index + 2]))
+        ) {
+          number += normalized[index]; // 'e' or 'E'
+          index += 1;
+          if (normalized[index] === "+" || normalized[index] === "-") {
+            number += normalized[index];
+            index += 1;
+          }
+          while (index < normalized.length && /\d/.test(normalized[index])) {
+            number += normalized[index];
+            index += 1;
+          }
+        }
       }
 
       const value = Number(number);
@@ -190,6 +225,15 @@ function tokenize(expression) {
       ) {
         name += normalized[index];
         index += 1;
+      }
+
+      if (name === "e" || name === "E") {
+        tokens.push({
+          type: "number",
+          value: Math.E,
+          isConstant: true,
+        });
+        continue;
       }
 
       tokens.push({
@@ -255,7 +299,7 @@ export function evaluateExpression(expression, angleMode = "DEG") {
 
   // Handles multiplication and division (*, /)
   const parseTerm = (baseValue = undefined) => {
-    let left = parsePower(baseValue);
+    let left = parseUnary(baseValue);
 
     while (
       peek()?.value === "*" ||
@@ -263,7 +307,7 @@ export function evaluateExpression(expression, angleMode = "DEG") {
     ) {
       const operator = consume().value;
       // In multiplication/division, the percentage is a fractional value
-      const right = parsePower(undefined);
+      const right = parseUnary(undefined);
 
       if (operator === "/" && right === 0) {
         throw new Error("Division by zero");
@@ -278,22 +322,7 @@ export function evaluateExpression(expression, angleMode = "DEG") {
     return left;
   };
 
-  // Handles power operator (^)
-  const parsePower = (baseValue = undefined) => {
-    let left = parseUnary(baseValue);
-
-    if (peek()?.value === "^") {
-      consume();
-
-      // Exponent is evaluated as a pure number without additive context
-      const exponent = parsePower(undefined);
-      left = Math.pow(left, exponent);
-    }
-
-    return left;
-  };
-
-  // Handles unary signs (+, -)
+  // Handles unary signs (+, -) with correct algebraic precedence over power
   const parseUnary = (baseValue = undefined) => {
     if (peek()?.value === "+") {
       consume();
@@ -305,7 +334,22 @@ export function evaluateExpression(expression, angleMode = "DEG") {
       return -parseUnary(baseValue);
     }
 
-    return parsePostfix(baseValue);
+    return parsePower(baseValue);
+  };
+
+  // Handles power operator (^)
+  const parsePower = (baseValue = undefined) => {
+    let left = parsePostfix(baseValue);
+
+    if (peek()?.value === "^") {
+      consume();
+
+      // Exponent is evaluated as a pure number or unary without additive context
+      const exponent = parseUnary(undefined);
+      left = Math.pow(left, exponent);
+    }
+
+    return left;
   };
 
   // Handles postfix operators (! for factorial, % for percentage)

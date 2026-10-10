@@ -7,14 +7,16 @@ const scientificButtons = [
 
   { label: "tan", action: "tan" },
   { label: "π", action: "pi" },
-  { label: "ln", action: "ln" },
+  { label: "e", action: "e" },
   { label: "pow", action: "pow" },
 
+  { label: "ln", action: "ln" },
+  { label: "log", action: "log" },
   { label: "√", action: "sqrt" },
   { label: "1/x", action: "reciprocal" },
+
   { label: "x²", action: "square" },
   { label: "x!", action: "factorial" },
-
   { label: "(", action: "(" },
   { label: ")", action: ")" },
 ];

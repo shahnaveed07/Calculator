@@ -51,3 +51,45 @@
 - `npm test`: All unit tests passed without failure.
 - `npm run lint` (`oxlint`): 0 warnings, 0 errors.
 - `npm run build` (`vite build`): Built production bundle cleanly.
+
+## 4. Professional Calculator Upgrade Report
+
+### 4.1 Root Cause & Mathematical Defect Fixes
+1. **Operator Precedence (Unary Minus vs. Powers)**:
+   - *Previous Defect*: `parsePower` was invoking `parseUnary` on its base operand. As a consequence, expressions such as `-5^2` and `-(5)^2` evaluated to `+25` instead of `-25`.
+   - *Fix*: Standardized the algebraic grammar so unary operators (`+`, `-`) wrap `parsePower`. `-5^2` now correctly yields `-25`, `-(5)^2` yields `-25`, and `(-5)^2` evaluates to `+25`. Power exponents also support unary signs (e.g. `2^-3 = 0.125`).
+
+2. **Chained Calculations with Scientific Notation**:
+   - *Previous Defect*: Number tokenization did not parse exponential notation (e.g. `1e-7`, `2.5e+3`). If a previous calculation produced a very small or very large number and the user continued calculating, the `e` character was erroneously parsed as a function name, triggering an `Unknown function` crash.
+   - *Fix*: Enhanced number scanning in `tokenize` to parse exponent segments (`[eE][+-]?\d+`) into a single valid finite number token. Chaining calculations from results such as `1e-7 * 2 = 2e-7` now works flawlessly.
+
+3. **Constant Tokenization & Implicit Multiplication**:
+   - *Previous Defect*: The tokenizer pushed mathematical constants as generic numbers, causing subsequent numbers (e.g. `π2`, `π3`, `e2`) to fail with syntax errors.
+   - *Fix*: Tagged constant tokens (`π`, `e`) with `isConstant: true`. In `tokenize`, numbers following a constant automatically have an implicit multiplication (`*`) token inserted.
+
+4. **Euler's Constant (e) and Common Logarithm (log)**:
+   - Added `e` (`Math.E ≈ 2.718281828459045`) constant support for direct entry, powers (`e^2`), products (`2e`), and functions (`ln(e) = 1`).
+   - Added base-10 `log` (`Math.log10`) alongside natural `ln`, with proper domain validation (throws for `x <= 0`).
+
+### 4.2 UI & UX Polish
+1. **Dual-Line Display with Expression History**:
+   - Upgraded `Display.jsx` to render an upper status row containing the active angle mode badge (`DEG`/`RAD`) and the completed operation history (`200 × 10% =`).
+   - The primary display line prominently showcases the current active expression or formatted result, with smooth horizontal scroll capability to prevent digit truncation on long numbers.
+
+2. **Complete 4x4 Scientific Keypad**:
+   - Filled the scientific keypad layout into a clean, balanced 16-button grid (4 columns × 4 rows):
+     - Row 1: `DEG`, `RAD`, `sin`, `cos`
+     - Row 2: `tan`, `π`, `e`, `pow`
+     - Row 3: `ln`, `log`, `√`, `1/x`
+     - Row 4: `x²`, `x!`, `(`, `)`
+   - No awkward gaps or uneven rows.
+
+3. **Keyboard Shortcuts & Performance**:
+   - Bound `e`/`E` to Euler's constant and `l`/`L` to logarithmic functions.
+   - Optimized keyboard event handling in `Calculator.jsx` with a stable handler ref to prevent re-attaching listeners on every render.
+
+### 4.3 Automated Verification
+- Added tests for unary minus power precedence, exponential scientific notation chaining, implicit multiplication after constants, `e` constant evaluations, and `log` operations.
+- All 155 unit tests passed cleanly via `npm test`.
+- Linter checks passed with 0 errors (`oxlint`).
+- Production build succeeded (`vite build`).

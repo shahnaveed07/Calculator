@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Display from "./Display";
 import BasicButtons from "./BasicButtons";
 import ScientificButtons from "./ScientificButtons";
@@ -13,6 +13,8 @@ function Calculator() {
   const [expression, setExpression] = useState("");
   // Formatted string displayed on screen
   const [display, setDisplay] = useState("0");
+  // Holds the completed expression history (e.g. "200 × 10% =")
+  const [history, setHistory] = useState("");
   // Toggle state for showing/hiding scientific buttons
   const [scientificMode, setScientificMode] = useState(false);
   // Angle mode for scientific trigonometric functions ("DEG" or "RAD")
@@ -31,6 +33,7 @@ function Calculator() {
   const clear = () => {
     setExpression("");
     setDisplay("0");
+    setHistory("");
     setJustCalculated(false);
   };
 
@@ -141,7 +144,7 @@ function Calculator() {
     updateExpression(`${expression})`);
   };
 
-  // Appends the pi (π) constant, inserting implicit multiplication if after a number, bracket, or percent
+  // Appends the pi (π) constant, inserting implicit multiplication if after a number, bracket, percent, or constant
   const addPi = () => {
     if (justCalculated) {
       updateExpression("π");
@@ -155,7 +158,7 @@ function Calculator() {
 
     const last = expression.at(-1);
 
-    if (/\d|\)|%|π$/.test(last)) {
+    if (/\d|\)|%|π|e$/.test(last)) {
       updateExpression(`${expression}*π`);
       return;
     }
@@ -163,13 +166,36 @@ function Calculator() {
     updateExpression(`${expression}π`);
   };
 
-  // Applies scientific functions (sin, cos, tan, ln, sqrt, reciprocal, square, factorial)
+  // Appends Euler's number (e), inserting implicit multiplication if after a number, bracket, percent, or constant
+  const addEuler = () => {
+    if (justCalculated) {
+      updateExpression("e");
+      return;
+    }
+
+    if (!expression) {
+      updateExpression("e");
+      return;
+    }
+
+    const last = expression.at(-1);
+
+    if (/\d|\)|%|π|e$/.test(last)) {
+      updateExpression(`${expression}*e`);
+      return;
+    }
+
+    updateExpression(`${expression}e`);
+  };
+
+  // Applies scientific functions (sin, cos, tan, ln, log, sqrt, reciprocal, square, factorial)
   const applyScientificFunction = (action) => {
     switch (action) {
       case "sin":
       case "cos":
       case "tan":
       case "ln":
+      case "log":
       case "sqrt": {
         // If empty or ends with operator/bracket, start the function call
         if (!expression || /[+\-*/^(]$/.test(expression)) {
@@ -260,6 +286,10 @@ function Calculator() {
       updateExpression(expression.slice(0, -4));
       return;
     }
+    if (expression.endsWith("log(")) {
+      updateExpression(expression.slice(0, -4));
+      return;
+    }
     if (expression.endsWith("1/(")) {
       updateExpression(expression.slice(0, -3));
       return;
@@ -290,10 +320,12 @@ function Calculator() {
 
       const result = evaluateExpression(evalExpr, angleMode);
 
+      setHistory(`${formatExpression(evalExpr)} =`);
       setDisplay(formatResult(result));
       setExpression(String(result));
       setJustCalculated(true);
     } catch {
+      setHistory(`${formatExpression(expression)} =`);
       setDisplay("Error");
       setExpression("");
       setJustCalculated(true);
@@ -357,6 +389,10 @@ function Calculator() {
         addPi();
         break;
 
+      case "e":
+        addEuler();
+        break;
+
       case "pow":
         addOperator("^");
         break;
@@ -365,6 +401,7 @@ function Calculator() {
       case "cos":
       case "tan":
       case "ln":
+      case "log":
       case "sqrt":
       case "reciprocal":
       case "square":
@@ -377,36 +414,48 @@ function Calculator() {
     }
   };
 
+  // Keep a stable ref to handlePress for keyboard listener
+  const handlePressRef = useRef(handlePress);
+
+  useEffect(() => {
+    handlePressRef.current = handlePress;
+  });
+
   // Listens for physical keyboard events
   useEffect(() => {
     const handleKeyboard = (event) => {
       const { key } = event;
+      const press = handlePressRef.current;
 
       if (/^\d$/.test(key)) {
-        handlePress(key);
+        press(key);
       } else if (["+", "-", "*", "/"].includes(key)) {
-        handlePress(key);
+        press(key);
       } else if (key === "x" || key === "X") {
-        handlePress("*");
+        press("*");
       } else if (key === ".") {
-        handlePress(".");
+        press(".");
       } else if (key === "Enter" || key === "=") {
         event.preventDefault();
-        handlePress("equals");
+        press("equals");
       } else if (key === "Backspace") {
-        handlePress("backspace");
+        press("backspace");
       } else if (key === "Escape") {
-        handlePress("clear");
+        press("clear");
       } else if (key === "%") {
-        handlePress("percent");
+        press("percent");
       } else if (key === "p" || key === "P") {
-        handlePress("pi");
+        press("pi");
+      } else if (key === "e" || key === "E") {
+        press("e");
+      } else if (key === "l" || key === "L") {
+        press("ln");
       } else if (key === "(" || key === ")") {
-        handlePress(key);
+        press(key);
       } else if (key === "^") {
-        handlePress("pow");
+        press("pow");
       } else if (key === "!") {
-        handlePress("factorial");
+        press("factorial");
       }
     };
 
@@ -415,14 +464,18 @@ function Calculator() {
     return () => {
       window.removeEventListener("keydown", handleKeyboard);
     };
-  });
+  }, []);
 
   return (
     <main className="app">
       <div className="calculator">
         <h1>Calculator</h1>
 
-        <Display value={display} angleMode={scientificMode ? angleMode : null} />
+        <Display
+          value={display}
+          history={history}
+          angleMode={scientificMode ? angleMode : null}
+        />
 
         {scientificMode && (
           <ScientificButtons onPress={handlePress} angleMode={angleMode} />

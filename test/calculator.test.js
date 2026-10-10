@@ -105,13 +105,46 @@ assert.equal(evaluateExpression("sin(π)", "RAD"), 0, "sin(π) RAD failed");
 assert.equal(evaluateExpression("cos(π/2)", "RAD"), 0, "cos(π/2) RAD failed");
 assert.throws(() => evaluateExpression("tan(π/2)", "RAD"), /Undefined tan/);
 
+// Test algebraic precedence with powers and unary operators
+assert.equal(evaluateExpression("-5^2"), -25, "-5^2 failed");
+assert.equal(evaluateExpression("-(5)^2"), -25, "-(5)^2 failed");
+assert.equal(evaluateExpression("(-5)^2"), 25, "(-5)^2 failed");
+assert.equal(evaluateExpression("2^-3"), 0.125, "2^-3 failed");
+
+// Test Euler constant (e) and logarithm (log)
+assert.equal(evaluateExpression("e"), Math.E, "e constant failed");
+assert.equal(evaluateExpression("2e"), 2 * Math.E, "2e failed");
+assert.equal(evaluateExpression("e2"), 2 * Math.E, "e2 failed");
+assert.equal(evaluateExpression("e+2"), Math.E + 2, "e+2 failed");
+assert.equal(evaluateExpression("ln(e)"), 1, "ln(e) failed");
+assert.equal(evaluateExpression("log(10)"), 1, "log(10) failed");
+assert.equal(evaluateExpression("log(100)"), 2, "log(100) failed");
+assert.equal(evaluateExpression("log(1000)"), 3, "log(1000) failed");
+assert.equal(evaluateExpression("log(1)"), 0, "log(1) failed");
+assert.throws(() => evaluateExpression("log(0)"), /Invalid log/);
+assert.throws(() => evaluateExpression("log(-10)"), /Invalid log/);
+
+// Test numbers in scientific exponential notation
+assert.equal(evaluateExpression("1e-7 * 2"), 2e-7, "1e-7 * 2 failed");
+assert.equal(evaluateExpression("1e5 + 5"), 100005, "1e5 + 5 failed");
+assert.equal(evaluateExpression("2.5e2 - 50"), 200, "2.5e2 - 50 failed");
+
 // Test Pi (π) constant
 assert.equal(evaluateExpression("π"), Math.PI, "π constant failed");
 assert.equal(evaluateExpression("2π"), 2 * Math.PI, "2π implicit multiplication failed");
+assert.equal(evaluateExpression("π2"), 2 * Math.PI, "π2 implicit multiplication failed");
+assert.equal(evaluateExpression("π3"), 3 * Math.PI, "π3 implicit multiplication failed");
 assert.equal(evaluateExpression("2*π"), 2 * Math.PI, "2*π failed");
 assert.equal(evaluateExpression("π*2"), 2 * Math.PI, "π*2 failed");
 assert.equal(evaluateExpression("π+5"), Math.PI + 5, "π+5 failed");
 assert.equal(evaluateExpression("sin(π)", "RAD"), 0, "sin(π) in RAD failed");
+
+// Additional angle tests
+assert.equal(evaluateExpression("sin(360)", "DEG"), 0, "sin(360) failed");
+assert.equal(evaluateExpression("cos(270)", "DEG"), 0, "cos(270) failed");
+assert.equal(evaluateExpression("tan(180)", "DEG"), 0, "tan(180) failed");
+assert.equal(evaluateExpression("tan(135)", "DEG"), -1, "tan(135) failed");
+assert.equal(evaluateExpression("tan(225)", "DEG"), 1, "tan(225) failed");
 
 // Test error handling
 assert.throws(() => evaluateExpression("1/0"), /Division by zero/);
