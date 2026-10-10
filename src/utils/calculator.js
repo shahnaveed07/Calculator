@@ -1,5 +1,42 @@
+// Helper to clean trigonometric precision artifacts (e.g. 1.22e-16 -> 0, 0.49999999999999994 -> 0.5)
+function cleanTrigValue(val) {
+  if (Math.abs(val) < 1e-15) {
+    return 0;
+  }
+  return Math.round(val * 1e14) / 1e14;
+}
+
+// Evaluates trigonometric functions in DEG or RAD angle mode
+function calculateTrig(fn, value, angleMode = "DEG") {
+  if (angleMode === "DEG") {
+    if (fn === "tan") {
+      const normalized = ((value % 180) + 180) % 180;
+      if (Math.abs(normalized - 90) < 1e-11) {
+        throw new Error("Undefined tan");
+      }
+    }
+    const rad = (value * Math.PI) / 180;
+    return cleanTrigValue(Math[fn](rad));
+  }
+
+  // RAD mode
+  if (fn === "tan") {
+    const multiple = value / (Math.PI / 2);
+    const nearest = Math.round(multiple);
+    if (Math.abs(multiple - nearest) < 1e-11 && Math.abs(nearest % 2) === 1) {
+      throw new Error("Undefined tan");
+    }
+  }
+  return cleanTrigValue(Math[fn](value));
+}
+
 // Mathematical functions supported by the calculator
 const FUNCTIONS = {
+  // Trigonometric functions
+  sin: (value, angleMode = "DEG") => calculateTrig("sin", value, angleMode),
+  cos: (value, angleMode = "DEG") => calculateTrig("cos", value, angleMode),
+  tan: (value, angleMode = "DEG") => calculateTrig("tan", value, angleMode),
+
   // Natural logarithm (ln) with base e
   ln: (value) => {
     if (value <= 0) {
@@ -74,16 +111,33 @@ function tokenize(expression) {
   const tokens = [];
   let index = 0;
 
-  // Checks if the previous token was a percent or closing bracket that requires implicit multiplication
+  // Checks if the previous token was a percent, closing bracket, or pi that requires implicit multiplication
   const shouldInsertImplicitMultiply = () => {
     const last = tokens.at(-1);
-    return last && (last.value === "%" || last.value === ")");
+    return last && (last.value === "%" || last.value === ")" || last.value === "π");
   };
 
   while (index < normalized.length) {
     const char = normalized[index];
 
     if (/\s/.test(char)) {
+      index += 1;
+      continue;
+    }
+
+    if (char === "π") {
+      if (shouldInsertImplicitMultiply() || tokens.at(-1)?.type === "number") {
+        tokens.push({
+          type: "operator",
+          value: "*",
+        });
+      }
+
+      tokens.push({
+        type: "number",
+        value: Math.PI,
+      });
+
       index += 1;
       continue;
     }
@@ -121,7 +175,7 @@ function tokenize(expression) {
     }
 
     if (/[a-zA-Z]/.test(char)) {
-      if (shouldInsertImplicitMultiply()) {
+      if (shouldInsertImplicitMultiply() || tokens.at(-1)?.type === "number") {
         tokens.push({
           type: "operator",
           value: "*",
@@ -146,7 +200,7 @@ function tokenize(expression) {
       continue;
     }
 
-    if (char === "(" && shouldInsertImplicitMultiply()) {
+    if (char === "(" && (shouldInsertImplicitMultiply() || tokens.at(-1)?.type === "number")) {
       tokens.push({
         type: "operator",
         value: "*",
@@ -170,7 +224,7 @@ function tokenize(expression) {
 }
 
 // Evaluates a mathematical string expression and returns the numeric result
-export function evaluateExpression(expression) {
+export function evaluateExpression(expression, angleMode = "DEG") {
   const tokens = tokenize(expression);
   let position = 0;
 
@@ -338,6 +392,10 @@ export function evaluateExpression(expression) {
       }
 
       consume();
+
+      if (["sin", "cos", "tan"].includes(functionName)) {
+        return FUNCTIONS[functionName](...args, angleMode);
+      }
 
       return FUNCTIONS[functionName](...args);
     }

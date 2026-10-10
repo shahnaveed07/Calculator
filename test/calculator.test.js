@@ -78,6 +78,41 @@ assert.equal(evaluateExpression("(5)^2"), 25, "square failed");
 assert.equal(evaluateExpression("0!"), 1, "0! failed");
 assert.equal(evaluateExpression("5!"), 120, "5! failed");
 
+// Test trigonometric functions (DEG mode default)
+assert.equal(evaluateExpression("sin(30)", "DEG"), 0.5, "sin(30) DEG failed");
+assert.equal(evaluateExpression("cos(60)", "DEG"), 0.5, "cos(60) DEG failed");
+assert.equal(evaluateExpression("tan(45)", "DEG"), 1, "tan(45) DEG failed");
+assert.equal(evaluateExpression("sin(180)", "DEG"), 0, "sin(180) DEG failed");
+assert.equal(evaluateExpression("cos(90)", "DEG"), 0, "cos(90) DEG failed");
+assert.equal(evaluateExpression("sin(0)", "DEG"), 0, "sin(0) DEG failed");
+assert.equal(evaluateExpression("cos(0)", "DEG"), 1, "cos(0) DEG failed");
+assert.equal(evaluateExpression("sin(90)", "DEG"), 1, "sin(90) DEG failed");
+assert.equal(evaluateExpression("cos(180)", "DEG"), -1, "cos(180) DEG failed");
+assert.equal(formatResult(evaluateExpression("sin(180)", "DEG")), "0", "formatResult sin(180) failed");
+assert.equal(formatResult(evaluateExpression("cos(90)", "DEG")), "0", "formatResult cos(90) failed");
+assert.throws(() => evaluateExpression("tan(90)", "DEG"), /Undefined tan/);
+assert.throws(() => evaluateExpression("tan(270)", "DEG"), /Undefined tan/);
+assert.throws(() => evaluateExpression("tan(-90)", "DEG"), /Undefined tan/);
+
+// Test trigonometric functions (RAD mode)
+assert.equal(evaluateExpression("sin(0)", "RAD"), 0, "sin(0) RAD failed");
+assert.equal(evaluateExpression("cos(0)", "RAD"), 1, "cos(0) RAD failed");
+assert.equal(evaluateExpression("tan(0)", "RAD"), 0, "tan(0) RAD failed");
+assert.equal(evaluateExpression("sin(π/6)", "RAD"), 0.5, "sin(π/6) RAD failed");
+assert.equal(evaluateExpression("cos(π/3)", "RAD"), 0.5, "cos(π/3) RAD failed");
+assert.equal(evaluateExpression("tan(π/4)", "RAD"), 1, "tan(π/4) RAD failed");
+assert.equal(evaluateExpression("sin(π)", "RAD"), 0, "sin(π) RAD failed");
+assert.equal(evaluateExpression("cos(π/2)", "RAD"), 0, "cos(π/2) RAD failed");
+assert.throws(() => evaluateExpression("tan(π/2)", "RAD"), /Undefined tan/);
+
+// Test Pi (π) constant
+assert.equal(evaluateExpression("π"), Math.PI, "π constant failed");
+assert.equal(evaluateExpression("2π"), 2 * Math.PI, "2π implicit multiplication failed");
+assert.equal(evaluateExpression("2*π"), 2 * Math.PI, "2*π failed");
+assert.equal(evaluateExpression("π*2"), 2 * Math.PI, "π*2 failed");
+assert.equal(evaluateExpression("π+5"), Math.PI + 5, "π+5 failed");
+assert.equal(evaluateExpression("sin(π)", "RAD"), 0, "sin(π) in RAD failed");
+
 // Test error handling
 assert.throws(() => evaluateExpression("1/0"), /Division by zero/);
 assert.throws(() => evaluateExpression("ln(0)"), /Invalid ln/);

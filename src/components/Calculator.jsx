@@ -9,11 +9,18 @@ import {
 } from "../utils/calculator";
 
 function Calculator() {
+  // Stores the raw mathematical expression string
   const [expression, setExpression] = useState("");
+  // Formatted string displayed on screen
   const [display, setDisplay] = useState("0");
+  // Toggle state for showing/hiding scientific buttons
   const [scientificMode, setScientificMode] = useState(false);
+  // Angle mode for scientific trigonometric functions ("DEG" or "RAD")
+  const [angleMode, setAngleMode] = useState("DEG");
+  // Tracks if the current screen value was just produced by a calculation
   const [justCalculated, setJustCalculated] = useState(false);
 
+  // Updates expression state and formats it for user display
   const updateExpression = (value) => {
     setExpression(value);
     setDisplay(value ? formatExpression(value) : "0");
@@ -134,9 +141,34 @@ function Calculator() {
     updateExpression(`${expression})`);
   };
 
-  // Applies scientific functions (ln, sqrt, reciprocal, square, factorial)
+  // Appends the pi (π) constant, inserting implicit multiplication if after a number, bracket, or percent
+  const addPi = () => {
+    if (justCalculated) {
+      updateExpression("π");
+      return;
+    }
+
+    if (!expression) {
+      updateExpression("π");
+      return;
+    }
+
+    const last = expression.at(-1);
+
+    if (/\d|\)|%|π$/.test(last)) {
+      updateExpression(`${expression}*π`);
+      return;
+    }
+
+    updateExpression(`${expression}π`);
+  };
+
+  // Applies scientific functions (sin, cos, tan, ln, sqrt, reciprocal, square, factorial)
   const applyScientificFunction = (action) => {
     switch (action) {
+      case "sin":
+      case "cos":
+      case "tan":
       case "ln":
       case "sqrt": {
         // If empty or ends with operator/bracket, start the function call
@@ -224,6 +256,10 @@ function Calculator() {
       updateExpression(expression.slice(0, -5));
       return;
     }
+    if (expression.endsWith("sin(") || expression.endsWith("cos(") || expression.endsWith("tan(")) {
+      updateExpression(expression.slice(0, -4));
+      return;
+    }
     if (expression.endsWith("1/(")) {
       updateExpression(expression.slice(0, -3));
       return;
@@ -252,7 +288,7 @@ function Calculator() {
         evalExpr += ")".repeat(openCount - closeCount);
       }
 
-      const result = evaluateExpression(evalExpr);
+      const result = evaluateExpression(evalExpr, angleMode);
 
       setDisplay(formatResult(result));
       setExpression(String(result));
@@ -309,10 +345,25 @@ function Calculator() {
         addPercent();
         break;
 
+      case "deg":
+        setAngleMode("DEG");
+        break;
+
+      case "rad":
+        setAngleMode("RAD");
+        break;
+
+      case "pi":
+        addPi();
+        break;
+
       case "pow":
         addOperator("^");
         break;
 
+      case "sin":
+      case "cos":
+      case "tan":
       case "ln":
       case "sqrt":
       case "reciprocal":
@@ -348,6 +399,8 @@ function Calculator() {
         handlePress("clear");
       } else if (key === "%") {
         handlePress("percent");
+      } else if (key === "p" || key === "P") {
+        handlePress("pi");
       } else if (key === "(" || key === ")") {
         handlePress(key);
       } else if (key === "^") {
@@ -369,10 +422,10 @@ function Calculator() {
       <div className="calculator">
         <h1>Calculator</h1>
 
-        <Display value={display} />
+        <Display value={display} angleMode={scientificMode ? angleMode : null} />
 
         {scientificMode && (
-          <ScientificButtons onPress={handlePress} />
+          <ScientificButtons onPress={handlePress} angleMode={angleMode} />
         )}
 
         <BasicButtons

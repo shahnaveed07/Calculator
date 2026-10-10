@@ -1,8 +1,9 @@
-// Renders the calculator display screen with the current formatted value
-function Display({ value }) {
+// Renders the calculator display screen with current formatted value and optional angle mode badge
+function Display({ value, angleMode }) {
   return (
     <div className="display">
-      <span>{value}</span>
+      {angleMode && <span className="angle-mode-badge">{angleMode}</span>}
+      <span className="display-value">{value}</span>
     </div>
   );
 }
